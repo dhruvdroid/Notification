@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.widget.RemoteViews
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 
 class MyTimerService : Service() {
 
+    private lateinit var notificationView: RemoteViews
     private lateinit var notiBuilder: Notification
 
     companion object {
@@ -33,14 +33,17 @@ class MyTimerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        notificationView = RemoteViews(packageName, R.layout.notification_layout)
         createNotification()
     }
 
-    fun getPendingIntent(): PendingIntent? {
+    private fun getPendingIntent(): PendingIntent? {
         // Create an explicit intent for an Activity in your app
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
+
+        // intent.putExtra("timer", notificationView.)
         return PendingIntent.getActivity(this, 0, intent, 0)
 
 
@@ -62,7 +65,7 @@ class MyTimerService : Service() {
             .setWhen(System.currentTimeMillis())
             .setSmallIcon(R.drawable.ic_baseline_timer_24)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(RemoteViews(packageName, R.layout.notification_layout))
+            .setCustomContentView(notificationView)
             .setContentIntent(getPendingIntent())
             .setContentTitle(baseContext.getString(R.string.app_name))
             .setContentText("Active Session")
@@ -100,25 +103,18 @@ class MyTimerService : Service() {
             .setAutoCancel(true)
             .setPriority(NotificationManager.IMPORTANCE_MIN)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(RemoteViews(packageName, R.layout.notification_layout))
+            .setCustomContentView(notificationView)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setContentIntent(getPendingIntent())
             .build()
         val notificationManager = NotificationManagerCompat.from(this)
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
-        // startForeground(NOTIFICATION_ID, notiBuilder)
-
     }
 
 
     private fun showNotification() {
         // Start foreground service.
         startForeground(NOTIFICATION_ID, notiBuilder)
-
-//        with(NotificationManagerCompat.from(baseContext)) {
-//             notificationId is a unique int for each notification that you must define
-//            notify(NOTIFICATION_ID, notificationBuilder)
-//        }
     }
 
     override fun onDestroy() {
@@ -128,25 +124,21 @@ class MyTimerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         if (intent?.extras != null) {
+            when (intent.action) {
 
-            val action = intent.action
-            when (action) {
                 START_FOREGROUND_SERVICE -> {
-                    Toast.makeText(
-                        baseContext,
-                        intent.getLongExtra("timer", 0).toString(),
-                        Toast.LENGTH_SHORT
-                    ).show()
-
+                    val timestamp = intent.getLongExtra("timer", 0)
+                    // set chronometer
+                    notificationView.setChronometer(R.id.chronometer, timestamp, null, true)
+                    // show notification
                     showNotification()
                 }
 
                 STOP_FOREGROUND_SERVICE -> {
-
+                    stopForeground(true)
+                    stopSelf()
                 }
             }
-
-
         }
         return START_STICKY
     }

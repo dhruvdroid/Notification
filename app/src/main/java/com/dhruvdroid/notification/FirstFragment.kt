@@ -1,6 +1,5 @@
 package com.dhruvdroid.notification
 
-import android.app.Notification
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -18,9 +17,6 @@ import kotlinx.android.synthetic.main.fragment_first.*
  */
 class FirstFragment : Fragment() {
 
-    private var notificationBuilder: Notification? = null
-    private lateinit var formattedTime: String
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -33,12 +29,12 @@ class FirstFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         view.findViewById<Button>(R.id.button_first).setOnClickListener {
-            startTimer()
+            startTimer(SystemClock.elapsedRealtime())
         }
     }
 
-    private fun startTimer() {
-        chronometer.base = SystemClock.elapsedRealtime()
+    private fun startTimer(startTime: Long) {
+        chronometer.base = startTime
         chronometer.setOnChronometerTickListener {
             Log.i("Timer--->", "Countdown---> " + chronometer.base)
             // formattedTime = getFormattedTime(chronometer.base)
@@ -46,10 +42,34 @@ class FirstFragment : Fragment() {
         chronometer.start()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (MainActivity.appPauseTime > 0L) {
+            Log.i(FirstFragment::class.java.name, "App Resume Time == ${MainActivity.appPauseTime}")
+            Log.i(
+                FirstFragment::class.java.name,
+                "App Resume formatted time == ${getFormattedTime(MainActivity.appPauseTime)}"
+            )
+            startTimer(MainActivity.appPauseTime + (MainActivity.appResumeTime - MainActivity.appPauseTime))
+            val intent = Intent(activity, MyTimerService::class.java)
+            intent.action = MyTimerService.STOP_FOREGROUND_SERVICE
+            activity?.stopService(intent)
+        }
+    }
+
+    private fun getTimeInSeconds(appResumeTime: Long): Int {
+        //val time: Long = SystemClock.elapsedRealtime() - appResumeTime
+        val hour = (appResumeTime / 3600000).toInt()
+        val minutes = (appResumeTime - hour * 3600000).toInt() / 60000
+        return (appResumeTime - hour * 3600000 - minutes * 60000).toInt() / 1000
+    }
+
     override fun onPause() {
         super.onPause()
+        MainActivity.appPauseTime = SystemClock.elapsedRealtime()
+        Log.i(FirstFragment::class.java.name, "App Pause Time == $MainActivity.appPauseTime")
         val intent = Intent(activity, MyTimerService::class.java)
-        intent.setAction(MyTimerService.START_FOREGROUND_SERVICE)
+        intent.action = MyTimerService.START_FOREGROUND_SERVICE
         intent.putExtra("timer", chronometer.base)
         activity?.startService(intent)
     }
@@ -66,63 +86,4 @@ class FirstFragment : Fragment() {
         return "Countdown---> $hh:$mm:$ss"
     }
 
-    /*private fun getPendingIntent(): PendingIntent? {
-        // Create an explicit intent for an Activity in your app
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        return PendingIntent.getActivity(context, 0, intent, 0)
-
-
-    }
-
-    private fun createNotification() {
-
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.channel_name)
-            val descriptionText = getString(R.string.channel_description)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                name,
-                importance
-            ).apply {
-                description = descriptionText
-            }
-
-            // Register the channel with the system
-            val notificationManager: NotificationManager =
-                activity?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        // Get the layouts to use in the custom notification
-        val notificationLayout = RemoteViews(activity?.packageName, R.layout.notification_layout)
-        // val notificationLayoutExpanded = RemoteViews(packageName, R.layout.notification_large)
-
-        // Apply the layouts to the notification
-        notificationBuilder = context?.let {
-            NotificationCompat.Builder(
-                it, NOTIFICATION_CHANNEL_ID
-            )
-                .setSmallIcon(R.drawable.ic_baseline_timer_24)
-                .setContentText("Active Session")
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(notificationLayout)
-                .setContentTitle("Notification")
-                .setContentIntent(getPendingIntent())
-                .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .build()
-        }
-    }
-
-    private fun showNotification() {
-        with(context?.let { NotificationManagerCompat.from(it) }) {
-            // notificationId is a unique int for each notification that you must define
-            notificationBuilder?.let { this?.notify(100, it) }
-        }
-    }*/
 }
