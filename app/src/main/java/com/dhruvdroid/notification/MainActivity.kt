@@ -1,8 +1,6 @@
 package com.dhruvdroid.notification
 
 import android.os.Bundle
-import android.os.SystemClock
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -40,20 +38,6 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        appPauseTime = SystemClock.elapsedRealtime()
-        Log.i(MainActivity::class.java.name, "Pause time --> $appPauseTime")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (appPauseTime > 0L) {
-            appResumeTime = SystemClock.elapsedRealtime()
-            Log.i(MainActivity::class.java.name, "Resume time --> $appResumeTime")
         }
     }
 }

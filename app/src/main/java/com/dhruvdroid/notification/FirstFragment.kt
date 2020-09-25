@@ -45,10 +45,13 @@ class FirstFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (MainActivity.appPauseTime > 0L) {
-            Log.i(FirstFragment::class.java.name, "App Resume Time == ${MainActivity.appPauseTime}")
             Log.i(
                 FirstFragment::class.java.name,
-                "App Resume formatted time == ${getFormattedTime(MainActivity.appPauseTime)}"
+                "App Resume Time == ${MainActivity.appResumeTime}"
+            )
+            Log.i(
+                FirstFragment::class.java.name,
+                "App Resume formatted time == ${getFormattedTime(MainActivity.appResumeTime)}"
             )
             startTimer(MainActivity.appPauseTime + (MainActivity.appResumeTime - MainActivity.appPauseTime))
             val intent = Intent(activity, MyTimerService::class.java)
