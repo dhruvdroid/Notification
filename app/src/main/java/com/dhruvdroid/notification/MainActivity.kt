@@ -11,7 +11,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         var appPauseTime = 0L
-        var appResumeTime = 0L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -45,48 +45,20 @@ class FirstFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (MainActivity.appPauseTime > 0L) {
-            Log.i(
-                FirstFragment::class.java.name,
-                "App Resume Time == ${MainActivity.appResumeTime}"
-            )
-            Log.i(
-                FirstFragment::class.java.name,
-                "App Resume formatted time == ${getFormattedTime(MainActivity.appResumeTime)}"
-            )
-            startTimer(MainActivity.appPauseTime + (MainActivity.appResumeTime - MainActivity.appPauseTime))
+            startTimer(MainActivity.appPauseTime)
             val intent = Intent(activity, MyTimerService::class.java)
             intent.action = MyTimerService.STOP_FOREGROUND_SERVICE
             activity?.stopService(intent)
         }
     }
 
-    private fun getTimeInSeconds(appResumeTime: Long): Int {
-        //val time: Long = SystemClock.elapsedRealtime() - appResumeTime
-        val hour = (appResumeTime / 3600000).toInt()
-        val minutes = (appResumeTime - hour * 3600000).toInt() / 60000
-        return (appResumeTime - hour * 3600000 - minutes * 60000).toInt() / 1000
-    }
-
     override fun onPause() {
         super.onPause()
-        MainActivity.appPauseTime = SystemClock.elapsedRealtime()
+        MainActivity.appPauseTime = chronometer.base
         Log.i(FirstFragment::class.java.name, "App Pause Time == $MainActivity.appPauseTime")
         val intent = Intent(activity, MyTimerService::class.java)
         intent.action = MyTimerService.START_FOREGROUND_SERVICE
         intent.putExtra("timer", chronometer.base)
         activity?.startService(intent)
     }
-
-    private fun getFormattedTime(base: Long): String {
-        val time: Long = SystemClock.elapsedRealtime() - base
-        val hour = (time / 3600000).toInt()
-        val minutes = (time - hour * 3600000).toInt() / 60000
-        val seconds = (time - hour * 3600000 - minutes * 60000).toInt() / 1000
-        val hh = if (hour < 10) "0$hour" else hour.toString() + ""
-        val mm = if (minutes < 10) "0$minutes" else minutes.toString() + ""
-        val ss = if (seconds < 10) "0$seconds" else seconds.toString() + ""
-        Log.i("Timer--->", "Countdown---> $hh:$mm:$ss")
-        return "Countdown---> $hh:$mm:$ss"
-    }
-
 }
